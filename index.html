@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>坂道データ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&family=Shippori+Mincho:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --nogi: #8B1A4A;
+    --nogi-light: #D4547A;
+    --sakura: #C17A2B;
+    --sakura-light: #E8A84A;
+    --hinata: #1A6E8B;
+    --hinata-light: #4AABE8;
+    --bg: #0d0b0e;
+    --paper: #13101a;
+    --paper2: #1a1624;
+    --text: #f0e8f5;
+    --muted: #8a7d96;
+    --border: rgba(255,255,255,0.07);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif JP', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .ambient {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.1;
+    transition: background 0.6s ease;
+  }
+  .ambient-1 { width: 500px; height: 500px; top: -100px; left: -100px; }
+  .ambient-2 { width: 400px; height: 400px; bottom: -100px; right: -100px; }
+
+  /* ===== HEADER ===== */
+  header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 2.5rem 1rem 0;
+  }
+
+  .jp-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    background: linear-gradient(135deg, var(--nogi-light), var(--sakura-light), var(--hinata-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    margin-top: 0.3rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* ===== PAGE NAV ===== */
+  .page-nav {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin: 1.8rem auto 0;
+    width: fit-content;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+  }
+
+  .page-nav button {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.2em;
+    padding: 0.6rem 1.8rem;
+    background: rgba(255,255,255,0.02);
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-right: 1px solid var(--border);
+  }
+  .page-nav button:last-child { border-right: none; }
+  .page-nav button.active {
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+  }
+  .page-nav button:hover:not(.active) {
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* ===== DIVIDER ===== */
+  .header-divider {
+    height: 1px;
+    background: var(--border);
+    margin-top: 1.5rem;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ===== PAGE SECTIONS ===== */
+  .page { display: none; position: relative; z-index: 10; }
+  .page.active { display: block; }
+
+  /* ========================================
+     PICKER PAGE
+  ======================================== */
+  .group-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem 1rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    padding: 0.55rem 1.4rem;
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.03);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .tab input[type="checkbox"] { display: none; }
+
+  .tab::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    transform: scaleX(0);
+    transition: transform 0.25s ease;
+  }
+  .tab[data-group="nogi"]::after  { background: var(--nogi-light); }
+  .tab[data-group="sakura"]::after { background: var(--sakura-light); }
+  .tab[data-group="hinata"]::after { background: var(--hinata-light); }
+
+  .tab.active, .tab:hover {
+    color: var(--text);
+    border-color: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.06);
+  }
+  .tab.active::after { transform: scaleX(1); }
+  .tab[data-group="nogi"].active  { color: var(--nogi-light);  border-color: var(--nogi); }
+  .tab[data-group="sakura"].active { color: var(--sakura-light); border-color: var(--sakura); }
+  .tab[data-group="hinata"].active { color: var(--hinata-light); border-color: var(--hinata); }
+
+  #noGroupWarning {
+    display: none;
+    text-align: center;
+    color: var(--sakura-light);
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    margin-top: -0.3rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem 2rem;
+  }
+
+  /* Result card */
+  .result-card {
+    width: min(460px, 94vw);
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2.2rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+  }
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    transition: background 0.4s;
+  }
+  .result-card.nogi-card::before  { background: linear-gradient(90deg, var(--nogi), var(--nogi-light)); }
+  .result-card.sakura-card::before { background: linear-gradient(90deg, var(--sakura), var(--sakura-light)); }
+  .result-card.hinata-card::before { background: linear-gradient(90deg, var(--hinata), var(--hinata-light)); }
+
+  .result-group-badge {
+    font-size: 0.68rem;
+    letter-spacing: 0.3em;
+    padding: 0.22rem 0.75rem;
+    border-radius: 1px;
+    font-family: 'Shippori Mincho', serif;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.3s ease 0.1s;
+  }
+  .result-card.show .result-group-badge { opacity: 1; transform: translateY(0); }
+  .nogi-card  .result-group-badge { background: rgba(139,26,74,0.3);  color: var(--nogi-light);  border: 1px solid rgba(139,26,74,0.5); }
+  .sakura-card .result-group-badge { background: rgba(193,122,43,0.3); color: var(--sakura-light); border: 1px solid rgba(193,122,43,0.5); }
+  .hinata-card .result-group-badge { background: rgba(26,110,139,0.3); color: var(--hinata-light); border: 1px solid rgba(26,110,139,0.5); }
+
+  /* Photo */
+  .member-photo-wrap {
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    opacity: 0;
+    transform: scale(0.85);
+    transition: all 0.45s cubic-bezier(0.22,1,0.36,1) 0.05s;
+    flex-shrink: 0;
+  }
+  .result-card.show .member-photo-wrap { opacity: 1; transform: scale(1); }
+  .member-photo-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .nogi-card  .member-photo-wrap { border-color: rgba(212,84,122,0.5);  box-shadow: 0 0 18px rgba(212,84,122,0.15); }
+  .sakura-card .member-photo-wrap { border-color: rgba(232,168,74,0.5);  box-shadow: 0 0 18px rgba(232,168,74,0.15); }
+  .hinata-card .member-photo-wrap { border-color: rgba(74,171,232,0.5);  box-shadow: 0 0 18px rgba(74,171,232,0.15); }
+  .photo-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:2rem; color:rgba(255,255,255,0.12); }
+
+  .result-name {
+    font-family: 'Shippori Mincho', serif;
+    font-size: clamp(1.8rem, 6vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    line-height: 1.2;
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+    transition: all 0.4s cubic-bezier(0.22,1,0.36,1) 0.15s;
+  }
+  .result-card.show .result-name { opacity: 1; transform: translateY(0) scale(1); }
+  .result-name-en {
+    font-size: 0.75rem; color: var(--muted); letter-spacing: 0.2em;
+    opacity: 0; transform: translateY(4px);
+    transition: all 0.3s ease 0.25s;
+  }
+  .result-card.show .result-name-en { opacity: 1; transform: translateY(0); }
+  .nogi-card  .result-name { color: var(--nogi-light); }
+  .sakura-card .result-name { color: var(--sakura-light); }
+  .hinata-card .result-name { color: var(--hinata-light); }
+
+  .idle-text { color: var(--muted); font-size: 0.88rem; letter-spacing: 0.2em; font-family: 'Shippori Mincho', serif; }
+
+  @keyframes shuffle {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-4px) rotate(-0.5deg); }
+    50% { transform: translateX(4px) rotate(0.5deg); }
+    80% { transform: translateX(-2px); }
+  }
+  .result-card.shuffling { animation: shuffle 0.08s ease infinite; }
+
+  /* Pick button */
+  .pick-btn {
+    margin-top: 1.4rem;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 1rem;
+    letter-spacing: 0.3em;
+    padding: 0.85rem 3rem;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+  }
+  .pick-btn:hover {
+    border-color: rgba(255,255,255,0.38);
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .pick-btn:active { transform: translateY(0); }
+
+  /* Count row */
+  .count-row {
+    display: flex; gap: 2rem; margin-top: 2rem;
+    justify-content: center; flex-wrap: wrap;
+  }
+  .count-item { text-align: center; font-family: 'Shippori Mincho', serif; }
+  .count-num { font-size: 1.9rem; font-weight: 700; line-height: 1; }
+  .count-label { font-size: 0.63rem; letter-spacing: 0.2em; color: var(--muted); margin-top: 0.2rem; }
+  .count-nogi  { color: var(--nogi-light); }
+  .count-sakura { color: var(--sakura-light); }
+  .count-hinata { color: var(--hinata-light); }
+
+  /* History */
+  .history-section { width: min(500px, 94vw); margin: 0.5rem auto 3rem; }
+  .history-title { font-size: 0.63rem; letter-spacing: 0.3em; color: var(--muted); text-align: center; margin-bottom: 0.8rem; }
+  .history-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 200px; overflow-y: auto; }
+  .history-list::-webkit-scrollbar { width: 3px; }
+  .history-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  .history-item {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.45rem 0.75rem;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 2px; font-size: 0.8rem;
+    animation: fadeInUp 0.3s ease;
+  }
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+  .history-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .h-name { font-family: 'Shippori Mincho', serif; letter-spacing: 0.1em; }
+  .h-group { font-size: 0.66rem; color: var(--muted); letter-spacing: 0.1em; margin-left: auto; }
+  .clear-btn {
+    margin-top: 0.7rem; width: 100%; background: none; border: none;
+    color: var(--muted); font-size: 0.68rem; letter-spacing: 0.2em;
+    cursor: pointer; padding: 0.35rem; transition: color 0.2s;
+    font-family: 'Noto Serif JP', serif;
+  }
+  .clear-btn:hover { color: var(--text); }
+
+  /* ========================================
+     LIST PAGE
+  ======================================== */
+  .list-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 1.8rem 1rem 1.2rem;
+  }
+
+  .list-controls input,
+  .list-controls select {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 0.82rem;
+    padding: 0.5rem 0.85rem;
+    background: var(--paper2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
+    outline: none;
+    letter-spacing: 0.08em;
+    transition: border-color 0.2s;
+  }
+  .list-controls input:focus,
+  .list-controls select:focus { border-color: rgba(255,255,255,0.25); }
+  .list-controls select option { background: #1a1624; }
+
+  .member-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0.5rem 1rem 3rem;
+  }
+
+  .member-card {
+    width: 160px;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: fadeInUp 0.3s ease;
+    position: relative;
+  }
+  .member-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  /* 期ごとのアクセントライン */
+  .member-card::before {
+    content: '';
+    display: block;
+    height: 3px;
+    width: 100%;
+  }
+  .gen-2::before { background: #6baed6; }
+  .gen-3::before { background: #a0d8f1; }
+  .gen-4::before { background: #f0a050; }
+  .gen-5::before { background: #f4b8c8; }
+  .gen-6::before { background: #40e0d0; }
+
+  .member-card .card-img-wrap {
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .member-card .card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+  }
+  .card-img-placeholder {
+    font-size: 2.5rem;
+    color: rgba(255,255,255,0.08);
+  }
+
+  .member-card .card-body {
+    padding: 0.7rem 0.6rem 0.8rem;
+  }
+  .card-group-badge {
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 1px;
+    display: inline-block;
+    margin-bottom: 0.4rem;
+  }
+  .badge-nogi  { background: rgba(139,26,74,0.3);  color: var(--nogi-light);  border: 1px solid rgba(139,26,74,0.4); }
+  .badge-sakura { background: rgba(193,122,43,0.3); color: var(--sakura-light); border: 1px solid rgba(193,122,43,0.4); }
+  .badge-hinata { background: rgba(26,110,139,0.3); color: var(--hinata-light); border: 1px solid rgba(26,110,139,0.4); }
+
+  .card-name {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.3;
+  }
+  .card-gen {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-top: 0.25rem;
+  }
+
+  .no-results {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    padding: 3rem;
+    width: 100%;
+    font-family: 'Shippori Mincho', serif;
+  }
+
+  /* ========================================
+     FOCUS PAGE（今日の注目）
+  ======================================== */
+  .focus-wrap { width: min(720px, 100%); margin: 0 auto; padding: 1.8rem 16px 3rem; display: flex; flex-direction: column; gap: 1.4rem; }
+  .panel { background: var(--paper); border: 1px solid var(--border); border-radius: 4px; padding: 1.3rem 1.2rem; }
+  .panel-title { font-family: 'Shippori Mincho', serif; font-size: 0.72rem; letter-spacing: 0.3em; color: var(--muted); margin-bottom: 0.9rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .panel-title .spacer { flex: 1; }
+
+  .date-row { display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
+  .date-row button, .mini-btn {
+    font-family: 'Shippori Mincho', serif; font-size: 0.8rem; letter-spacing: 0.1em;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text);
+    padding: 0.4rem 0.8rem; border-radius: 2px; cursor: pointer; transition: all 0.2s;
+  }
+  .date-row button:hover, .mini-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.2); }
+  .date-row input[type="date"] {
+    font-family: 'Noto Serif JP', serif; font-size: 0.9rem; padding: 0.4rem 0.6rem;
+    background: var(--paper2); border: 1px solid var(--border); color: var(--text); border-radius: 2px; color-scheme: dark;
+  }
+  .date-label { text-align: center; font-family: 'Shippori Mincho', serif; font-size: 1.15rem; letter-spacing: 0.15em; margin-top: 0.7rem; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.45rem; min-height: 2rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-family: 'Shippori Mincho', serif; font-size: 0.85rem; letter-spacing: 0.08em;
+    padding: 0.3rem 0.4rem 0.3rem 0.75rem; border-radius: 2px; border: 1px solid;
+    animation: fadeInUp 0.25s ease;
+  }
+  .chip button { background: none; border: none; color: inherit; cursor: pointer; font-size: 0.9rem; opacity: 0.6; padding: 0 0.2rem; }
+  .chip button:hover { opacity: 1; }
+  .chip.nogi   { color: var(--nogi-light);   border-color: rgba(139,26,74,0.6);  background: rgba(139,26,74,0.18); }
+  .chip.sakura { color: var(--sakura-light); border-color: rgba(193,122,43,0.6); background: rgba(193,122,43,0.18); }
+  .chip.hinata { color: var(--hinata-light); border-color: rgba(26,110,139,0.6); background: rgba(26,110,139,0.18); }
+  .empty-note { color: var(--muted); font-size: 0.8rem; letter-spacing: 0.1em; }
+
+  .picker-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0 0.7rem; }
+  .picker-controls input, .picker-controls select, .memo-box {
+    font-family: 'Noto Serif JP', serif; font-size: 0.82rem; padding: 0.5rem 0.75rem;
+    background: var(--paper2); border: 1px solid var(--border); border-radius: 2px; color: var(--text); outline: none;
+  }
+  .picker-controls input { flex: 1; min-width: 140px; }
+  .picker-controls select option { background: #1a1624; }
+  .name-pool { display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 220px; overflow-y: auto; padding-right: 4px; }
+  .name-pool::-webkit-scrollbar { width: 3px; }
+  .name-pool::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+  .name-pill {
+    font-family: 'Shippori Mincho', serif; font-size: 0.78rem; letter-spacing: 0.05em;
+    padding: 0.3rem 0.65rem; border-radius: 2px; cursor: pointer;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--muted); transition: all 0.15s;
+  }
+  .name-pill:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .name-pill .dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 0.4rem; vertical-align: middle; }
+  .name-pill.on.nogi   { color: var(--nogi-light);   border-color: var(--nogi);   background: rgba(139,26,74,0.2); }
+  .name-pill.on.sakura { color: var(--sakura-light); border-color: var(--sakura); background: rgba(193,122,43,0.2); }
+  .name-pill.on.hinata { color: var(--hinata-light); border-color: var(--hinata); background: rgba(26,110,139,0.2); }
+
+  .memo-box { width: 100%; min-height: 70px; resize: vertical; line-height: 1.6; margin-top: 0.4rem; }
+  .saved-note { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.15em; text-align: right; height: 1rem; margin-top: 0.3rem; transition: opacity 0.3s; }
+
+  /* Recommend */
+  .rec-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; }
+  .rec-card {
+    background: var(--paper2); border: 1px solid var(--border); border-radius: 4px; padding: 1rem 0.8rem;
+    text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.45rem;
+    position: relative; overflow: hidden; animation: fadeInUp 0.35s ease;
+  }
+  .rec-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .rec-card.nogi::before   { background: linear-gradient(90deg, var(--nogi), var(--nogi-light)); }
+  .rec-card.sakura::before { background: linear-gradient(90deg, var(--sakura), var(--sakura-light)); }
+  .rec-card.hinata::before { background: linear-gradient(90deg, var(--hinata), var(--hinata-light)); }
+  .rec-photo { width: 84px; height: 84px; border-radius: 50%; overflow: hidden; border: 2px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+  .rec-photo img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .rec-photo .photo-placeholder { font-size: 1.4rem; }
+  .rec-name { font-family: 'Shippori Mincho', serif; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.1em; }
+  .rec-card.nogi .rec-name   { color: var(--nogi-light); }
+  .rec-card.sakura .rec-name { color: var(--sakura-light); }
+  .rec-card.hinata .rec-name { color: var(--hinata-light); }
+  .rec-meta { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.12em; }
+  .rec-reason { font-size: 0.72rem; line-height: 1.6; color: rgba(240,232,245,0.8); min-height: 2.3em; }
+  .rec-card .mini-btn { margin-top: 0.2rem; font-size: 0.72rem; }
+  .rec-card .mini-btn.done { color: var(--muted); cursor: default; }
+
+  /* Stats */
+  .stat-row { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.2rem; }
+  .stat-item { text-align: center; font-family: 'Shippori Mincho', serif; }
+  .stat-num { font-size: 1.7rem; font-weight: 700; line-height: 1; }
+  .stat-label { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); margin-top: 0.25rem; }
+  .ratio-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,0.05); margin-bottom: 0.4rem; gap: 2px; }
+  .ratio-bar div { height: 100%; transition: width 0.4s ease; }
+  .ratio-legend { display: flex; gap: 1rem; justify-content: center; font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .rank-list { display: flex; flex-direction: column; gap: 0.4rem; }
+  .rank-item { display: grid; grid-template-columns: 1.6rem 7.5rem 1fr 2.2rem; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
+  .rank-no { color: var(--muted); font-size: 0.7rem; text-align: right; }
+  .rank-name { font-family: 'Shippori Mincho', serif; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.05); overflow: hidden; }
+  .rank-bar div { height: 100%; border-radius: 3px; }
+  .rank-count { text-align: right; color: var(--muted); font-size: 0.72rem; }
+
+  /* Log */
+  .log-list { display: flex; flex-direction: column; gap: 0.45rem; max-height: 360px; overflow-y: auto; }
+  .log-list::-webkit-scrollbar { width: 3px; }
+  .log-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+  .log-item { padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 2px; cursor: pointer; transition: background 0.2s; }
+  .log-item:hover { background: rgba(255,255,255,0.05); }
+  .log-date { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.15em; margin-bottom: 0.3rem; }
+  .log-names { font-family: 'Shippori Mincho', serif; font-size: 0.88rem; letter-spacing: 0.06em; display: flex; flex-wrap: wrap; gap: 0.2rem 0.8rem; }
+  .log-memo { font-size: 0.74rem; color: rgba(240,232,245,0.7); margin-top: 0.3rem; line-height: 1.5; white-space: pre-wrap; }
+  .data-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.9rem; flex-wrap: wrap; }
+
+  /* ピッカー結果・一覧カードからの「注目」ボタン */
+  .focus-add-btn {
+    margin-top: 0.4rem; font-family: 'Shippori Mincho', serif; font-size: 0.72rem; letter-spacing: 0.15em;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.15); color: var(--text);
+    padding: 0.35rem 1rem; border-radius: 2px; cursor: pointer; transition: all 0.2s;
+    opacity: 0; transition: opacity 0.3s ease 0.3s, background 0.2s;
+  }
+  .result-card.show .focus-add-btn { opacity: 1; }
+  .focus-add-btn:hover { background: rgba(255,255,255,0.1); }
+  .focus-add-btn.on { color: #ffd76a; border-color: rgba(255,215,106,0.5); }
+  .card-star {
+    position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6);
+    cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 2;
+  }
+  .card-star:hover { color: #fff; }
+  .card-star.on { color: #ffd76a; border-color: rgba(255,215,106,0.6); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+    background: var(--paper2); border: 1px solid rgba(255,255,255,0.15); color: var(--text);
+    padding: 0.6rem 1.2rem; border-radius: 3px; font-size: 0.8rem; letter-spacing: 0.1em;
+    opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 100; font-family: 'Shippori Mincho', serif;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Buzz（話題度） */
+  .buzz-status { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 0.8rem; }
+  .buzz-list { display: flex; flex-direction: column; gap: 0.35rem; }
+  .buzz-item { display: grid; grid-template-columns: 1.6rem 1fr 84px 4.6rem; align-items: center; gap: 0.6rem; padding: 0.35rem 0.2rem; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.8rem; }
+  .buzz-name { font-family: 'Shippori Mincho', serif; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .buzz-name small { display: block; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; font-family: 'Noto Serif JP', serif; }
+  .buzz-val { text-align: right; line-height: 1.25; }
+  .buzz-val b { font-size: 0.92rem; }
+  .buzz-val small { display: block; font-size: 0.6rem; color: var(--muted); }
+  .buzz-up { color: #ffd76a; }
+  .buzz-item svg { display: block; }
+
+  @media (max-width: 520px) {
+    .page-nav button { padding: 0.6rem 0.9rem; font-size: 0.74rem; letter-spacing: 0.1em; }
+    .rank-item { grid-template-columns: 1.4rem 6rem 1fr 2rem; }
+    .buzz-item { grid-template-columns: 1.3rem 1fr 64px 4.2rem; gap: 0.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient ambient-1" id="amb1"></div>
+<div class="ambient ambient-2" id="amb2"></div>
+
+<header>
+  <div class="jp-title">坂道データ</div>
+  <div class="subtitle">Sakamichi Fan App</div>
+  <nav class="page-nav">
+    <button class="active" onclick="switchPage('picker', this)">ランダムピッカー</button>
+    <button onclick="switchPage('list', this)">メンバー一覧</button>
+    <button onclick="switchPage('focus', this)">今日の注目</button>
+  </nav>
+</header>
+<div class="header-divider"></div>
+
+<!-- ===== PICKER PAGE ===== -->
+<div class="page active" id="page-picker">
+  <div class="group-tabs">
+    <label class="tab active" data-group="nogi"><input type="checkbox" checked> 乃木坂46</label>
+    <label class="tab active" data-group="sakura"><input type="checkbox" checked> 櫻坂46</label>
+    <label class="tab active" data-group="hinata"><input type="checkbox" checked> 日向坂46</label>
+  </div>
+  <div id="noGroupWarning">グループを1つ以上選んでください</div>
+
+  <div class="stage">
+    <div class="result-card" id="resultCard">
+      <span class="idle-text">ボタンを押してメンバーを抽選</span>
+    </div>
+    <button class="pick-btn" onclick="pick()">抽　選</button>
+    <div class="count-row">
+      <div class="count-item">
+        <div class="count-num count-nogi" id="nogiCount">—</div>
+        <div class="count-label">乃木坂46</div>
+      </div>
+      <div class="count-item">
+        <div class="count-num count-sakura" id="sakuraCount">—</div>
+        <div class="count-label">櫻坂46</div>
+      </div>
+      <div class="count-item">
+        <div class="count-num count-hinata" id="hinataCount">—</div>
+        <div class="count-label">日向坂46</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="history-section">
+    <div class="history-title" id="historyTitle" style="display:none">— 抽選履歴 —</div>
+    <div class="history-list" id="historyList"></div>
+    <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearHistory()">履歴をクリア</button>
+  </div>
+</div>
+
+<!-- ===== LIST PAGE ===== -->
+<div class="page" id="page-list">
+  <div class="list-controls">
+    <input type="text" id="search" placeholder="🔍 名前で検索">
+    <select id="groupFilter">
+      <option value="">全グループ</option>
+      <option value="乃木坂46">乃木坂46</option>
+      <option value="櫻坂46">櫻坂46</option>
+      <option value="日向坂46">日向坂46</option>
+    </select>
+    <select id="genFilter">
+      <option value="">全期生</option>
+      <option value="2期生">2期生</option>
+      <option value="3期生">3期生</option>
+      <option value="新3期生">新3期生</option>
+      <option value="4期生">4期生</option>
+      <option value="5期生">5期生</option>
+      <option value="6期生">6期生</option>
+    </select>
+  </div>
+  <div class="member-grid" id="memberGrid"></div>
+</div>
+
+<!-- ===== FOCUS PAGE（今日の注目） ===== -->
+<div class="page" id="page-focus">
+  <div class="focus-wrap">
+
+    <!-- 日付 & 記録 -->
+    <div class="panel">
+      <div class="date-row">
+        <button onclick="shiftFocusDate(-1)" aria-label="前日">◀</button>
+        <input type="date" id="focusDate">
+        <button onclick="shiftFocusDate(1)" aria-label="翌日">▶</button>
+        <button onclick="setFocusDate(todayStr())">今日</button>
+      </div>
+      <div class="date-label" id="focusDateLabel"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">— 注目したメンバー —</div>
+      <div class="chips" id="focusChips"></div>
+
+      <div class="picker-controls">
+        <input type="text" id="focusSearch" placeholder="🔍 名前で探して追加">
+        <select id="focusGroupFilter">
+          <option value="">全グループ</option>
+          <option value="乃木坂46">乃木坂46</option>
+          <option value="櫻坂46">櫻坂46</option>
+          <option value="日向坂46">日向坂46</option>
+        </select>
+      </div>
+      <div class="name-pool" id="namePool"></div>
+
+      <div class="panel-title" style="margin-top:1.2rem; margin-bottom:0">— ひとことメモ —</div>
+      <textarea class="memo-box" id="focusMemo" placeholder="ブログが良かった、MVの表情が最高…など"></textarea>
+      <div class="saved-note" id="savedNote"></div>
+    </div>
+
+    <!-- おすすめ -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>— 今日のおすすめ —</span>
+        <span class="spacer"></span>
+        <button class="mini-btn" onclick="rerollRec()">別の提案</button>
+      </div>
+      <div class="rec-list" id="recList"></div>
+    </div>
+
+    <!-- 話題度 -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>— 話題度（Wikipedia閲覧数）—</span>
+        <span class="spacer"></span>
+        <select id="buzzSort" class="mini-btn" style="padding:0.3rem 0.5rem">
+          <option value="spike">急上昇</option>
+          <option value="views">閲覧数</option>
+        </select>
+        <button class="mini-btn" id="buzzRefresh" onclick="refreshBuzz(true)">更新</button>
+      </div>
+      <div class="buzz-status" id="buzzStatus"></div>
+      <div class="buzz-list" id="buzzList"></div>
+    </div>
+
+    <!-- まとめ -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>— 注目まとめ —</span>
+        <span class="spacer"></span>
+        <select id="statRange" class="mini-btn" style="padding:0.3rem 0.5rem">
+          <option value="7">直近7日</option>
+          <option value="30" selected>直近30日</option>
+          <option value="0">全期間</option>
+        </select>
+      </div>
+      <div class="stat-row">
+        <div class="stat-item"><div class="stat-num" id="statDays">0</div><div class="stat-label">記録した日</div></div>
+        <div class="stat-item"><div class="stat-num" id="statMembers">0</div><div class="stat-label">注目したメンバー</div></div>
+        <div class="stat-item"><div class="stat-num" id="statStreak">0</div><div class="stat-label">連続記録</div></div>
+      </div>
+      <div class="ratio-bar" id="ratioBar"></div>
+      <div class="ratio-legend" id="ratioLegend"></div>
+      <div class="rank-list" id="rankList"></div>
+    </div>
+
+    <!-- 履歴 -->
+    <div class="panel">
+      <div class="panel-title">— 注目履歴 —</div>
+      <div class="log-list" id="logList"></div>
+      <div class="data-actions">
+        <button class="mini-btn" onclick="exportFocus()">書き出し (JSON)</button>
+        <button class="mini-btn" onclick="document.getElementById('importFile').click()">読み込み</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================
+//  統合メンバーデータ
+//  img: ローカル画像パス（index.htmlのimages/フォルダ）
+//  en:  ローマ字表記
+// =============================================
+const allMembers = [
+  // --- 乃木坂46 ---
+  // 3期生
+  {name:"伊藤理々杏",  group:"乃木坂46", gen:"3期生", img:"images/riria.jpg",     en:"Riria Ito"},
+  {name:"岩本蓮加",    group:"乃木坂46", gen:"3期生", img:"images/iwamoto.jpg",   en:"Renka Iwamoto"},
+  {name:"梅澤美波",    group:"乃木坂46", gen:"3期生", img:"images/ume.jpg",       en:"Minami Umezawa"},
+  {name:"吉田綾乃クリスティー", group:"乃木坂46", gen:"3期生", img:"images/ayano.jpg", en:"Ayanochristie Yoshida"},
+  // 4期生
+  {name:"遠藤さくら",  group:"乃木坂46", gen:"4期生", img:"images/saku.jpg",      en:"Sakura Endo"},
+  {name:"賀喜遥香",    group:"乃木坂46", gen:"4期生", img:"images/kaki.jpg",      en:"Haruka Kaki"},
+  {name:"金川紗耶",    group:"乃木坂46", gen:"4期生", img:"images/saya.jpg",      en:"Saya Kanagawa"},
+  {name:"黒見明香",    group:"乃木坂46", gen:"4期生", img:"images/kuromi.jpg",    en:"Haruka Kuromi"},
+  {name:"佐藤璃果",    group:"乃木坂46", gen:"4期生", img:"images/rika.jpg",      en:"Rika Sato"},
+  {name:"柴田柚菜",    group:"乃木坂46", gen:"4期生", img:"images/yuna.jpg",      en:"Yuna Shibata"},
+  {name:"田村真佑",    group:"乃木坂46", gen:"4期生", img:"images/mayu.jpg",      en:"Mayu Tamura"},
+  {name:"筒井あやめ",  group:"乃木坂46", gen:"4期生", img:"images/ayame.jpg",     en:"Ayame Tsutsui"},
+  {name:"林瑠奈",      group:"乃木坂46", gen:"4期生", img:"images/hayashi.jpg",   en:"Runa Hayashi"},
+  {name:"弓木奈於",    group:"乃木坂46", gen:"4期生", img:"images/yumiki.jpg",    en:"Nao Yumiki"},
+  // 5期生
+  {name:"五百城茉央",  group:"乃木坂46", gen:"5期生", img:"images/ioki.jpg",      en:"Mao Ioki"},
+  {name:"池田瑛紗",    group:"乃木坂46", gen:"5期生", img:"images/tere.jpg",      en:"Teresa Ikeda"},
+  {name:"一ノ瀬美空",  group:"乃木坂46", gen:"5期生", img:"images/miku.jpg",      en:"Miku Ichinose"},
+  {name:"井上和",      group:"乃木坂46", gen:"5期生", img:"images/nagi.jpg",      en:"Nagi Inoue"},
+  {name:"岡本姫奈",    group:"乃木坂46", gen:"5期生", img:"images/okamoto.jpg",   en:"Hina Okamoto"},
+  {name:"小川彩",      group:"乃木坂46", gen:"5期生", img:"images/aya.jpg",       en:"Aya Ogawa"},
+  {name:"奥田いろは",  group:"乃木坂46", gen:"5期生", img:"images/iroha.jpg",     en:"Iroha Okuda"},
+  {name:"川﨑桜",      group:"乃木坂46", gen:"5期生", img:"images/sakutan.jpg",   en:"Sakura Kawasaki"},
+  {name:"菅原咲月",    group:"乃木坂46", gen:"5期生", img:"images/sugawara.jpg",  en:"Satsuki Sugawara"},
+  {name:"冨里奈央",    group:"乃木坂46", gen:"5期生", img:"images/tomisato.jpg",  en:"Nao Tomisato"},
+  {name:"中西アルノ",  group:"乃木坂46", gen:"5期生", img:"images/nakanishi.jpg", en:"Aruno Nakanishi"},
+  // 6期生
+  {name:"愛宕心響",    group:"乃木坂46", gen:"6期生", img:"images/kokone.jpg",    en:"Kokone Atago"},
+  {name:"大越ひなの",  group:"乃木坂46", gen:"6期生", img:"images/hinano.jpg",    en:"Hinano Okoshi"},
+  {name:"小津玲奈",    group:"乃木坂46", gen:"6期生", img:"images/ozu.jpg",       en:"Reina Ozu"},
+  {name:"海邉朱莉",    group:"乃木坂46", gen:"6期生", img:"images/kaibe.jpg",     en:"Akari Kaibe"},
+  {name:"川端晃菜",    group:"乃木坂46", gen:"6期生", img:"images/kawabata.jpg",  en:"Hina Kawabata"},
+  {name:"鈴木佑捺",    group:"乃木坂46", gen:"6期生", img:"images/yuuna.jpg",     en:"Yuna Suzuki"},
+  {name:"瀬戸口心月",  group:"乃木坂46", gen:"6期生", img:"images/mitsuki.jpg",   en:"Mitsuki Setoguchi"},
+  {name:"長嶋凛桜",    group:"乃木坂46", gen:"6期生", img:"images/rio.jpg",       en:"Rio Nagashima"},
+  {name:"増田三莉音",  group:"乃木坂46", gen:"6期生", img:"images/mirine.jpg",    en:"Mirine Masuda"},
+  {name:"森平麗心",    group:"乃木坂46", gen:"6期生", img:"images/urumi.jpg",     en:"Urumi Morihira"},
+  {name:"矢田萌華",    group:"乃木坂46", gen:"6期生", img:"images/yada.jpg",      en:"Moeka Yada"},
+
+  // --- 櫻坂46 ---
+  // 2期生
+  {name:"山﨑天",      group:"櫻坂46", gen:"2期生", img:"", en:"Ten Yamasaki"},
+  {name:"幸阪茉里乃",  group:"櫻坂46", gen:"2期生", img:"", en:"Marino Kosaka"},
+  {name:"武元唯衣",    group:"櫻坂46", gen:"2期生", img:"", en:"Yui Takemoto"},
+  {name:"増本綺良",    group:"櫻坂46", gen:"2期生", img:"", en:"Kira Masumoto"},
+  {name:"藤吉夏鈴",    group:"櫻坂46", gen:"2期生", img:"", en:"Karin Fujiyoshi"},
+  {name:"森田ひかる",  group:"櫻坂46", gen:"2期生", img:"", en:"Hikaru Morita"},
+  {name:"大園玲",      group:"櫻坂46", gen:"2期生", img:"", en:"Rei Ozono"},
+  {name:"守屋麗奈",    group:"櫻坂46", gen:"2期生", img:"", en:"Rena Moriya"},
+  {name:"松田里奈",    group:"櫻坂46", gen:"2期生", img:"", en:"Rina Matsuda"},
+  {name:"大沼晶保",    group:"櫻坂46", gen:"2期生", img:"", en:"Akiho Onuma"},
+  {name:"遠藤光莉",    group:"櫻坂46", gen:"2期生", img:"", en:"Hikari Endo"},
+  {name:"田村保乃",    group:"櫻坂46", gen:"2期生", img:"", en:"Hono Tamura"},
+  // 3期生
+  {name:"的野美青",    group:"櫻坂46", gen:"3期生", img:"", en:"Mio Matono"},
+  {name:"向井純葉",    group:"櫻坂46", gen:"3期生", img:"", en:"Itoha Mukai"},
+  {name:"遠藤理子",    group:"櫻坂46", gen:"3期生", img:"", en:"Riko Endo"},
+  {name:"小島凪紗",    group:"櫻坂46", gen:"3期生", img:"", en:"Nagisa Kojima"},
+  {name:"谷口愛季",    group:"櫻坂46", gen:"3期生", img:"", en:"Airi Taniguchi"},
+  {name:"村山美羽",    group:"櫻坂46", gen:"3期生", img:"", en:"Miu Murayama"},
+  {name:"山下瞳月",    group:"櫻坂46", gen:"3期生", img:"", en:"Shizuki Yamashita"},
+  {name:"村井優",      group:"櫻坂46", gen:"3期生", img:"", en:"Yu Murai"},
+  {name:"小田倉麗奈",  group:"櫻坂46", gen:"3期生", img:"", en:"Reina Odakura"},
+  {name:"中嶋優月",    group:"櫻坂46", gen:"3期生", img:"", en:"Yuzuki Nakashima"},
+  {name:"石森璃花",    group:"櫻坂46", gen:"3期生", img:"", en:"Rika Ishimori"},
+  // 4期生
+  {name:"山田桃実",    group:"櫻坂46", gen:"4期生", img:"", en:"Momomi Yamada"},
+  {name:"中川智尋",    group:"櫻坂46", gen:"4期生", img:"", en:"Chihiro Nakagawa"},
+  {name:"佐藤愛桜",    group:"櫻坂46", gen:"4期生", img:"", en:"Neo Sato"},
+  {name:"稲熊ひな",    group:"櫻坂46", gen:"4期生", img:"", en:"Hina Inaguma"},
+  {name:"目黒陽色",    group:"櫻坂46", gen:"4期生", img:"", en:"Hiiro Meguro"},
+  {name:"山川宇衣",    group:"櫻坂46", gen:"4期生", img:"", en:"Ui Yamakawa"},
+  {name:"松本和子",    group:"櫻坂46", gen:"4期生", img:"", en:"Wako Matsumoto"},
+  {name:"浅井恋乃未",  group:"櫻坂46", gen:"4期生", img:"", en:"Konomi Asai"},
+  {name:"勝又春",      group:"櫻坂46", gen:"4期生", img:"", en:"Haru Katsumata"},
+
+  // --- 日向坂46 ---
+  // 2期生
+  {name:"松田好花",    group:"日向坂46", gen:"2期生", img:"", en:"Konoka Matsuda"},
+  {name:"小坂菜緒",    group:"日向坂46", gen:"2期生", img:"", en:"Nao Kosaka"},
+  {name:"金村美玖",    group:"日向坂46", gen:"2期生", img:"", en:"Miku Kanemura"},
+  // 3期生
+  {name:"上村ひなの",  group:"日向坂46", gen:"3期生", img:"", en:"Hinano Kamimura"},
+  // 新3期生
+  {name:"髙橋未来虹",  group:"日向坂46", gen:"新3期生", img:"", en:"Mikuni Takahashi"},
+  {name:"森本茉莉",    group:"日向坂46", gen:"新3期生", img:"", en:"Marii Morimoto"},
+  {name:"山口陽世",    group:"日向坂46", gen:"新3期生", img:"", en:"Haruyo Yamaguchi"},
+  // 4期生
+  {name:"平岡海月",    group:"日向坂46", gen:"4期生", img:"", en:"Mitsuki Hiraoka"},
+  {name:"山下葉留花",  group:"日向坂46", gen:"4期生", img:"", en:"Haruka Yamashita"},
+  {name:"平尾帆夏",    group:"日向坂46", gen:"4期生", img:"", en:"Honoka Hirao"},
+  {name:"石塚瑶季",    group:"日向坂46", gen:"4期生", img:"", en:"Tamaki Ishizuka"},
+  {name:"小西夏菜実",  group:"日向坂46", gen:"4期生", img:"", en:"Nanami Konishi"},
+  {name:"清水理央",    group:"日向坂46", gen:"4期生", img:"", en:"Rio Shimizu"},
+  {name:"宮地すみれ",  group:"日向坂46", gen:"4期生", img:"", en:"Sumire Miyachi"},
+  {name:"竹内希来里",  group:"日向坂46", gen:"4期生", img:"", en:"Kirari Takeuchi"},
+  {name:"藤嶌果歩",    group:"日向坂46", gen:"4期生", img:"", en:"Kaho Fujishima"},
+  {name:"正源司陽子",  group:"日向坂46", gen:"4期生", img:"", en:"Yoko Shogenji"},
+  {name:"渡辺莉奈",    group:"日向坂46", gen:"4期生", img:"", en:"Rina Watanabe"},
+  // 5期生
+  {name:"鶴崎仁香",    group:"日向坂46", gen:"5期生", img:"", en:"Niko Tsurusaki"},
+  {name:"松尾桜",      group:"日向坂46", gen:"5期生", img:"", en:"Sakura Matsuo"},
+  {name:"蔵盛妃那乃",  group:"日向坂46", gen:"5期生", img:"", en:"Hinano Kuramori"},
+  {name:"佐藤優羽",    group:"日向坂46", gen:"5期生", img:"", en:"Yu Sato"},
+  {name:"大田美月",    group:"日向坂46", gen:"5期生", img:"", en:"Midsuki Ota"},
+  {name:"片山紗希",    group:"日向坂46", gen:"5期生", img:"", en:"Saki Katayama"},
+  {name:"下田衣珠季",  group:"日向坂46", gen:"5期生", img:"", en:"Izuki Shimoda"},
+  {name:"大野愛実",    group:"日向坂46", gen:"5期生", img:"", en:"Manami Ono"},
+  {name:"高井俐香",    group:"日向坂46", gen:"5期生", img:"", en:"Rika Takai"},
+  {name:"坂井新奈",    group:"日向坂46", gen:"5期生", img:"", en:"Niina Sakai"},
+];
+
+// ピッカー用にグループ別に分類
+const members = {
+  nogi:   allMembers.filter(m => m.group === "乃木坂46"),
+  sakura: allMembers.filter(m => m.group === "櫻坂46"),
+  hinata: allMembers.filter(m => m.group === "日向坂46"),
+};
+
+const groupLabels = { nogi:"乃木坂46", sakura:"櫻坂46", hinata:"日向坂46" };
+const dotColors   = { nogi:"#D4547A",  sakura:"#E8A84A", hinata:"#4AABE8" };
+const groupKey    = { "乃木坂46":"nogi", "櫻坂46":"sakura", "日向坂46":"hinata" };
+const ambColors   = { nogi:"#8B1A4A",  sakura:"#C17A2B", hinata:"#1A6E8B" };
+
+// =============================================
+//  PAGE SWITCH
+// =============================================
+function switchPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.page-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'list') renderList();
+  if (id === 'focus') renderFocusPage();
+}
+
+// =============================================
+//  PICKER
+// =============================================
+let pickHistory = [];
+let isAnimating = false;
+
+function updateCounts() {
+  document.getElementById('nogiCount').textContent  = members.nogi.length;
+  document.getElementById('sakuraCount').textContent = members.sakura.length;
+  document.getElementById('hinataCount').textContent = members.hinata.length;
+}
+updateCounts();
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const cb = tab.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    tab.classList.toggle('active', cb.checked);
+    document.getElementById('noGroupWarning').style.display =
+      getSelectedGroups().length === 0 ? 'block' : 'none';
+  });
+});
+
+function getSelectedGroups() {
+  return [...document.querySelectorAll('.tab')]
+    .filter(t => t.querySelector('input').checked)
+    .map(t => t.dataset.group);
+}
+
+function pick() {
+  if (isAnimating) return;
+  const selected = getSelectedGroups();
+  if (selected.length === 0) {
+    document.getElementById('noGroupWarning').style.display = 'block';
+    return;
+  }
+  isAnimating = true;
+
+  const card = document.getElementById('resultCard');
+  card.className = 'result-card shuffling';
+  card.innerHTML = '';
+
+  let pool = [];
+  selected.forEach(g => members[g].forEach(m => pool.push({ ...m, groupKey: g })));
+
+  let shuffleCount = 0;
+  const maxShuffle = 14;
+  let picked = null;
+
+  const interval = setInterval(() => {
+    const m = pool[Math.floor(Math.random() * pool.length)];
+    picked = m;
+    card.innerHTML = `<span class="result-name" style="opacity:0.5">${m.name}</span>`;
+    shuffleCount++;
+    if (shuffleCount >= maxShuffle) {
+      clearInterval(interval);
+      showResult(picked);
+    }
+  }, 80);
+}
+
+async function fetchWikipediaImage(name) {
+  try {
+    const url = `https://ja.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(name)}&prop=pageimages&format=json&pithumbsize=400&origin=*`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    const page = Object.values(data.query.pages)[0];
+    return page?.thumbnail?.source || null;
+  } catch { return null; }
+}
+
+async function showResult(member) {
+  const gk   = member.groupKey || groupKey[member.group];
+  const card  = document.getElementById('resultCard');
+  card.className = `result-card ${gk}-card`;
+
+  // アンビエントカラー更新
+  document.getElementById('amb1').style.background = ambColors[gk];
+  document.getElementById('amb2').style.background = ambColors[gk];
+
+  // ローカル画像があれば使い、なければWikipediaで取得
+  const localSrc = member.img || '';
+  card.innerHTML = `
+    <span class="result-group-badge">${groupLabels[gk]}</span>
+    <div class="member-photo-wrap" id="photoWrap">
+      ${localSrc
+        ? `<img src="${localSrc}" alt="${member.name}" onerror="this.parentElement.innerHTML='<div class=\\'photo-placeholder\\'>♪</div>'">`
+        : `<div class="photo-placeholder">♪</div>`}
+    </div>
+    <span class="result-name">${member.name}</span>
+    <span class="result-name-en">${member.en}</span>
+    <button class="focus-add-btn ${isFocused(member.name) ? 'on' : ''}" data-focus-name="${member.name}">
+      ${isFocused(member.name) ? '★ 今日の注目に登録済み' : '☆ 今日の注目に追加'}
+    </button>
+  `;
+
+  requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('show')));
+
+  pickHistory.unshift({ gk, member });
+  if (pickHistory.length > 20) pickHistory.pop();
+  renderHistory();
+  isAnimating = false;
+
+  // ローカル画像がなければWikipediaで取得
+  if (!localSrc) {
+    const imgUrl = await fetchWikipediaImage(member.name);
+    const wrap   = document.getElementById('photoWrap');
+    if (wrap && imgUrl) {
+      wrap.innerHTML = `<img src="${imgUrl}" alt="${member.name}" onerror="this.parentElement.innerHTML='<div class=\\'photo-placeholder\\'>♪</div>'">`;
+    }
+  }
+}
+
+function renderHistory() {
+  const list     = document.getElementById('historyList');
+  const title    = document.getElementById('historyTitle');
+  const clearBtn = document.getElementById('clearBtn');
+  if (pickHistory.length === 0) {
+    list.innerHTML = '';
+    title.style.display = 'none';
+    clearBtn.style.display = 'none';
+    return;
+  }
+  title.style.display = 'block';
+  clearBtn.style.display = 'block';
+  list.innerHTML = pickHistory.map((h, i) => `
+    <div class="history-item" style="opacity:${1 - i * 0.04}">
+      <div class="history-dot" style="background:${dotColors[h.gk]}"></div>
+      <span class="h-name">${h.member.name}</span>
+      <span class="h-group">${groupLabels[h.gk]}</span>
+    </div>
+  `).join('');
+}
+
+function clearHistory() {
+  pickHistory = [];
+  renderHistory();
+}
+
+// =============================================
+//  MEMBER LIST
+// =============================================
+function genClass(gen) {
+  const map = { '2期生':'gen-2', '3期生':'gen-3', '新3期生':'gen-3', '4期生':'gen-4', '5期生':'gen-5', '6期生':'gen-6' };
+  return map[gen] || '';
+}
+
+function badgeClass(group) {
+  return { '乃木坂46':'badge-nogi', '櫻坂46':'badge-sakura', '日向坂46':'badge-hinata' }[group] || '';
+}
+
+function renderList() {
+  const search = document.getElementById('search').value.trim();
+  const group  = document.getElementById('groupFilter').value;
+  const gen    = document.getElementById('genFilter').value;
+
+  const filtered = allMembers.filter(m =>
+    (!group  || m.group === group) &&
+    (!gen    || m.gen   === gen) &&
+    (!search || m.name.includes(search))
+  );
+
+  const grid = document.getElementById('memberGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="no-results">該当するメンバーが見つかりません</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(m => `
+    <div class="member-card ${genClass(m.gen)}" data-name="${m.name}">
+      <button class="card-star ${isFocused(m.name) ? 'on' : ''}" data-star-name="${m.name}" title="今日の注目">${isFocused(m.name) ? '★' : '☆'}</button>
+      <div class="card-img-wrap">
+        ${m.img
+          ? `<img src="${m.img}" alt="${m.name}" loading="lazy" onerror="loadWikiImg(this, '${m.name}')">`
+          : `<div class="card-img-placeholder" id="ph-${m.name}">♪</div>`}
+      </div>
+      <div class="card-body">
+        <div class="card-group-badge ${badgeClass(m.group)}">${m.group}</div>
+        <div class="card-name">${m.name}</div>
+        <div class="card-gen">${m.gen}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // ローカル画像なしのメンバーはWikipediaから遅延取得
+  filtered.filter(m => !m.img).forEach(m => {
+    fetchWikipediaImage(m.name).then(url => {
+      if (!url) return;
+      const ph = document.getElementById('ph-' + m.name);
+      if (ph) ph.outerHTML = `<img src="${url}" alt="${m.name}" loading="lazy">`;
+    });
+  });
+}
+
+function loadWikiImg(imgEl, name) {
+  fetchWikipediaImage(name).then(url => {
+    if (url) imgEl.src = url;
+    else imgEl.parentElement.innerHTML = '<div class="card-img-placeholder">♪</div>';
+  });
+}
+
+document.getElementById('search').addEventListener('input', renderList);
+document.getElementById('groupFilter').addEventListener('change', renderList);
+document.getElementById('genFilter').addEventListener('change', renderList);
+
+// =============================================
+//  今日の注目（記録・まとめ・おすすめ）
+//  保存先: localStorage "sakamichi_focus_v1"
+//  形式: { "YYYY-MM-DD": { members: ["名前", ...], memo: "..." } }
+// =============================================
+const FOCUS_KEY = 'sakamichi_focus_v1';
+const memberByName = Object.fromEntries(allMembers.map(m => [m.name, m]));
+let focusData = loadFocus();
+// 話題度キャッシュを先に読み込んでおく（buzz 関連は下で定義）
+setTimeout(() => { computeBuzz(); }, 0);
+let focusDate = todayStr();
+let recReroll = 0;
+
+function loadFocus() {
+  try { return JSON.parse(localStorage.getItem(FOCUS_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveFocus() {
+  // 空の日は削除して保存
+  Object.keys(focusData).forEach(d => {
+    const e = focusData[d];
+    if ((!e.members || e.members.length === 0) && !(e.memo || '').trim()) delete focusData[d];
+  });
+  try { localStorage.setItem(FOCUS_KEY, JSON.stringify(focusData)); }
+  catch { showToast('保存できませんでした（ブラウザの保存領域を確認してください）'); }
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function toDateStr(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+function todayStr() { return toDateStr(new Date()); }
+function parseDate(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function daysBetween(a, b) { return Math.round((parseDate(b) - parseDate(a)) / 86400000); }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+
+function entryFor(date) { return focusData[date] || { members: [], memo: '' }; }
+function isFocused(name, date = todayStr()) { return entryFor(date).members.includes(name); }
+
+function toggleFocus(name, date = focusDate) {
+  const e = focusData[date] || (focusData[date] = { members: [], memo: '' });
+  const i = e.members.indexOf(name);
+  if (i >= 0) e.members.splice(i, 1); else e.members.push(name);
+  saveFocus();
+  return i < 0; // 追加されたら true
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ---------- 画像（ローカル → Wikipedia） ----------
+const wikiCache = {};
+function photoHtml(m, id) {
+  return m.img
+    ? `<img src="${m.img}" alt="${m.name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'photo-placeholder\\'>♪</div>'">`
+    : `<div class="photo-placeholder" id="${id}">♪</div>`;
+}
+function fillWikiPhoto(m, id) {
+  if (m.img) return;
+  const apply = url => {
+    const ph = document.getElementById(id);
+    if (ph && url) ph.outerHTML = `<img src="${url}" alt="${m.name}" loading="lazy">`;
+  };
+  if (m.name in wikiCache) return apply(wikiCache[m.name]);
+  fetchWikipediaImage(m.name).then(url => { wikiCache[m.name] = url; apply(url); });
+}
+
+// ---------- 日付 ----------
+function setFocusDate(d) {
+  focusDate = d;
+  recReroll = 0;
+  renderFocusPage();
+}
+function shiftFocusDate(delta) {
+  const d = parseDate(focusDate);
+  d.setDate(d.getDate() + delta);
+  setFocusDate(toDateStr(d));
+}
+document.getElementById('focusDate').addEventListener('change', e => { if (e.target.value) setFocusDate(e.target.value); });
+
+// ---------- 描画 ----------
+function renderFocusPage() {
+  document.getElementById('focusDate').value = focusDate;
+  const d = parseDate(focusDate);
+  const wd = '日月火水木金土'[d.getDay()];
+  const diff = daysBetween(todayStr(), focusDate);
+  const rel = diff === 0 ? '（今日）' : diff === -1 ? '（昨日）' : '';
+  document.getElementById('focusDateLabel').textContent = `${d.getMonth() + 1}月${d.getDate()}日（${wd}）${rel}`;
+  document.getElementById('focusMemo').value = entryFor(focusDate).memo || '';
+  document.getElementById('savedNote').textContent = '';
+  renderChips();
+  renderNamePool();
+  renderRecommend();
+  renderStats();
+  renderLog();
+  renderBuzz();
+  refreshBuzz(false); // 今日まだ取得していなければ自動で取得
+}
+
+function renderChips() {
+  const names = entryFor(focusDate).members;
+  const box = document.getElementById('focusChips');
+  if (names.length === 0) {
+    box.innerHTML = '<span class="empty-note">まだ記録がありません。下のリストから選んでください</span>';
+    return;
+  }
+  box.innerHTML = names.map(n => {
+    const m = memberByName[n];
+    const gk = m ? groupKey[m.group] : '';
+    return `<span class="chip ${gk}">${escapeHtml(n)}<button data-remove-name="${escapeHtml(n)}" aria-label="削除">×</button></span>`;
+  }).join('');
+}
+
+function renderNamePool() {
+  const q = document.getElementById('focusSearch').value.trim();
+  const g = document.getElementById('focusGroupFilter').value;
+  const selected = entryFor(focusDate).members;
+  const list = allMembers.filter(m => (!g || m.group === g) && (!q || m.name.includes(q) || m.en.toLowerCase().includes(q.toLowerCase())));
+  document.getElementById('namePool').innerHTML = list.length
+    ? list.map(m => {
+        const gk = groupKey[m.group];
+        const on = selected.includes(m.name) ? 'on' : '';
+        return `<button class="name-pill ${gk} ${on}" data-pill-name="${m.name}"><span class="dot" style="background:${dotColors[gk]}"></span>${m.name}</button>`;
+      }).join('')
+    : '<span class="empty-note">該当するメンバーがいません</span>';
+}
+document.getElementById('focusSearch').addEventListener('input', renderNamePool);
+document.getElementById('focusGroupFilter').addEventListener('change', renderNamePool);
+
+let memoTimer;
+document.getElementById('focusMemo').addEventListener('input', e => {
+  const entry = focusData[focusDate] || (focusData[focusDate] = { members: [], memo: '' });
+  entry.memo = e.target.value;
+  clearTimeout(memoTimer);
+  memoTimer = setTimeout(() => {
+    saveFocus();
+    const note = document.getElementById('savedNote');
+    note.textContent = '保存しました';
+    setTimeout(() => { note.textContent = ''; }, 1500);
+    renderLog();
+  }, 500);
+});
+
+// ---------- おすすめ ----------
+// 日付ごとに固定の乱数（同じ日は同じ提案、「別の提案」で変わる）
+function seededRandom(seedStr) {
+  let h = 1779033703 ^ seedStr.length;
+  for (let i = 0; i < seedStr.length; i++) { h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+  let a = h >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function buildRecommendations(date, count = 3) {
+  const rand = seededRandom(`${date}#${recReroll}`);
+  // 対象日より前、直近60日の記録から傾向を集計
+  const past = Object.keys(focusData).filter(d => d < date && daysBetween(d, date) <= 60).sort();
+  const groupCnt = {}, genCnt = {}, lastSeen = {}, memberCnt = {};
+  let total = 0;
+  past.forEach(d => focusData[d].members.forEach(n => {
+    const m = memberByName[n]; if (!m) return;
+    total++;
+    groupCnt[m.group] = (groupCnt[m.group] || 0) + 1;
+    const gg = m.group + m.gen;
+    genCnt[gg] = (genCnt[gg] || 0) + 1;
+    memberCnt[n] = (memberCnt[n] || 0) + 1;
+    lastSeen[n] = d;
+  }));
+  // 全期間の最終注目日（60日より前も含む）
+  const everSeen = {};
+  Object.keys(focusData).filter(d => d < date).forEach(d => focusData[d].members.forEach(n => { everSeen[n] = d; }));
+
+  const todays = entryFor(date).members;
+  const topGenKey = Object.entries(genCnt).sort((a, b) => b[1] - a[1])[0]?.[0];
+
+  const scored = allMembers.filter(m => !todays.includes(m.name)).map(m => {
+    const gg = m.group + m.gen;
+    const affinity = total ? ((groupCnt[m.group] || 0) / total) + 1.5 * ((genCnt[gg] || 0) / total) : 0;
+    const last = everSeen[m.name];
+    const since = last ? daysBetween(last, date) : null;
+    let fresh;
+    if (since === null) fresh = 0.9;
+    else if (since <= 2) fresh = -0.6;
+    else if (since < 7) fresh = 0;
+    else if (since < 14) fresh = 0.4;
+    else fresh = 0.8;
+    const jitter = rand() * (total ? 0.7 : 1.5);
+    // 話題度ボーナス：普段より閲覧が増えているほど加点（2倍で+0.9、4倍で+1.8）
+    const buzz = buzzScores[m.name];
+    const buzzBonus = buzz && buzz.ratio > 1 ? Math.min(Math.log2(buzz.ratio), 2.5) * 0.9 : 0;
+    const score = affinity * 2 + fresh + jitter + buzzBonus;
+
+    let reason;
+    if (buzz && buzz.ratio >= 1.8) reason = `話題急上昇中！Wikipedia閲覧数が普段の${buzz.ratio.toFixed(1)}倍`;
+    else if (total === 0) reason = '今日のめぐり合わせ。まずは気軽にチェックしてみては';
+    else if (since !== null && since >= 14) reason = `前回の注目から${since}日。久しぶりに近況をチェック`;
+    else if (since === null && gg === topGenKey) reason = `よく注目している${m.group} ${m.gen}。まだ記録のないメンバー`;
+    else if (since === null && groupCnt[m.group]) reason = `推しの多い${m.group}から、まだ注目していないメンバー`;
+    else if (since === null) reason = `普段あまり見ない${m.group}から新しい出会いを`;
+    else if (memberCnt[m.name] >= 3) reason = `最近よく注目中（直近${memberCnt[m.name]}回）`;
+    else reason = `${m.group} ${m.gen}のメンバー`;
+    return { m, score, reason };
+  }).sort((a, b) => b.score - a.score);
+
+  // 同じグループに偏りすぎないよう、1グループ最大2人
+  const picks = [], perGroup = {};
+  for (const s of scored) {
+    if ((perGroup[s.m.group] || 0) >= 2) continue;
+    picks.push(s);
+    perGroup[s.m.group] = (perGroup[s.m.group] || 0) + 1;
+    if (picks.length >= count) break;
+  }
+  return picks;
+}
+
+function renderRecommend() {
+  const picks = buildRecommendations(focusDate);
+  const box = document.getElementById('recList');
+  box.innerHTML = picks.map(({ m, reason }, i) => {
+    const gk = groupKey[m.group];
+    const id = `rec-ph-${i}`;
+    return `
+      <div class="rec-card ${gk}">
+        <div class="rec-photo">${photoHtml(m, id)}</div>
+        <div class="rec-name">${m.name}</div>
+        <div class="rec-meta">${m.group} ・ ${m.gen}</div>
+        <div class="rec-reason">${reason}</div>
+        <button class="mini-btn" data-rec-name="${m.name}">☆ 注目する</button>
+      </div>`;
+  }).join('');
+  picks.forEach(({ m }, i) => fillWikiPhoto(m, `rec-ph-${i}`));
+}
+function rerollRec() { recReroll++; renderRecommend(); }
+
+// ---------- まとめ ----------
+function renderStats() {
+  const range = Number(document.getElementById('statRange').value);
+  const today = todayStr();
+  const days = Object.keys(focusData)
+    .filter(d => focusData[d].members.length > 0)
+    .filter(d => !range || (d <= today && daysBetween(d, today) < range));
+
+  const cnt = {}, gCnt = { '乃木坂46': 0, '櫻坂46': 0, '日向坂46': 0 };
+  days.forEach(d => focusData[d].members.forEach(n => {
+    cnt[n] = (cnt[n] || 0) + 1;
+    const m = memberByName[n];
+    if (m) gCnt[m.group]++;
+  }));
+
+  // 連続記録（今日 or 昨日から遡る）
+  let streak = 0;
+  const cur = parseDate(today);
+  if (!(focusData[today]?.members.length)) cur.setDate(cur.getDate() - 1);
+  while (focusData[toDateStr(cur)]?.members.length) { streak++; cur.setDate(cur.getDate() - 1); }
+
+  document.getElementById('statDays').textContent = days.length;
+  document.getElementById('statMembers').textContent = Object.keys(cnt).length;
+  document.getElementById('statStreak').textContent = streak + '日';
+
+  const gTotal = Object.values(gCnt).reduce((a, b) => a + b, 0);
+  const gk = { '乃木坂46':'nogi', '櫻坂46':'sakura', '日向坂46':'hinata' };
+  document.getElementById('ratioBar').innerHTML = gTotal
+    ? Object.entries(gCnt).filter(([, v]) => v).map(([g, v]) => `<div style="width:${v / gTotal * 100}%; background:${dotColors[gk[g]]}" title="${g} ${v}回"></div>`).join('')
+    : '';
+  document.getElementById('ratioLegend').innerHTML = gTotal
+    ? Object.entries(gCnt).map(([g, v]) => `<span><span class="dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${dotColors[gk[g]]};margin-right:0.35rem"></span>${g} ${Math.round(v / gTotal * 100)}%</span>`).join('')
+    : '<span>記録が増えるとグループ比率が表示されます</span>';
+
+  const ranking = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const max = ranking[0]?.[1] || 1;
+  document.getElementById('rankList').innerHTML = ranking.length
+    ? ranking.map(([n, c], i) => {
+        const m = memberByName[n];
+        const color = m ? dotColors[groupKey[m.group]] : '#888';
+        return `<div class="rank-item">
+          <span class="rank-no">${i + 1}</span>
+          <span class="rank-name">${escapeHtml(n)}</span>
+          <span class="rank-bar"><div style="width:${c / max * 100}%; background:${color}"></div></span>
+          <span class="rank-count">${c}回</span>
+        </div>`;
+      }).join('')
+    : '<div class="empty-note" style="text-align:center">この期間の記録はまだありません</div>';
+}
+document.getElementById('statRange').addEventListener('change', renderStats);
+
+// ---------- 履歴 ----------
+function renderLog() {
+  const dates = Object.keys(focusData).sort().reverse();
+  const box = document.getElementById('logList');
+  if (dates.length === 0) { box.innerHTML = '<div class="empty-note" style="text-align:center">まだ履歴がありません</div>'; return; }
+  box.innerHTML = dates.map(d => {
+    const e = focusData[d];
+    const dt = parseDate(d);
+    const names = e.members.map(n => {
+      const m = memberByName[n];
+      const color = m ? dotColors[groupKey[m.group]] : 'inherit';
+      return `<span style="color:${color}">${escapeHtml(n)}</span>`;
+    }).join('');
+    return `<div class="log-item" data-log-date="${d}">
+      <div class="log-date">${dt.getFullYear()}.${pad(dt.getMonth() + 1)}.${pad(dt.getDate())}（${'日月火水木金土'[dt.getDay()]}）${d === focusDate ? ' ・ 表示中' : ''}</div>
+      <div class="log-names">${names || '<span class="empty-note">メンバー未選択</span>'}</div>
+      ${e.memo ? `<div class="log-memo">${escapeHtml(e.memo)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ---------- 書き出し / 読み込み ----------
+function exportFocus() {
+  const blob = new Blob([JSON.stringify(focusData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `sakamichi-focus-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+document.getElementById('importFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    let added = 0;
+    Object.entries(data).forEach(([d, v]) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !v || !Array.isArray(v.members)) return;
+      const cur = focusData[d] || { members: [], memo: '' };
+      v.members.forEach(n => { if (!cur.members.includes(n)) { cur.members.push(n); added++; } });
+      if (v.memo && !cur.memo) cur.memo = v.memo;
+      focusData[d] = cur;
+    });
+    saveFocus();
+    renderFocusPage();
+    showToast(`読み込みました（${added}件追加）`);
+  } catch { showToast('ファイルを読み込めませんでした'); }
+  e.target.value = '';
+});
+
+// =============================================
+//  話題度（Wikipedia 日本語版の閲覧数）
+//  - 直近3日の平均閲覧数 ÷ 普段（その前28日の中央値）＝「普段の何倍か」
+//  - 人気メンバーが常に上位にならないよう、本人の普段と比べる
+//  - 1日1回取得して localStorage "sakamichi_buzz_v1" にキャッシュ
+// =============================================
+const BUZZ_KEY = 'sakamichi_buzz_v1';
+const BUZZ_DAYS = 45;
+let buzzCache = loadBuzz();   // { fetchedOn, data: { 名前: { title, views:[...BUZZ_DAYS] } } }
+let buzzScores = {};          // { 名前: { ratio, recent, base, total30, spark } }
+let buzzLoading = false;
+
+function loadBuzz() {
+  try { return JSON.parse(localStorage.getItem(BUZZ_KEY)) || null; } catch { return null; }
+}
+function saveBuzz() {
+  try { localStorage.setItem(BUZZ_KEY, JSON.stringify(buzzCache)); } catch {}
+}
+function ymd(d) { return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`; }
+
+// メンバー名 → 実際の記事タイトル（リダイレクトを解決。記事がなければ null）
+async function resolveWikiTitles(names) {
+  const map = {};
+  for (let i = 0; i < names.length; i += 50) {
+    const chunk = names.slice(i, i + 50);
+    const url = `https://ja.wikipedia.org/w/api.php?action=query&redirects=1&format=json&origin=*&titles=${encodeURIComponent(chunk.join('|'))}`;
+    const res = await fetch(url);
+    const q = (await res.json()).query || {};
+    const follow = {};
+    (q.normalized || []).forEach(n => { follow[n.from] = n.to; });
+    (q.redirects  || []).forEach(r => { follow[r.from] = r.to; });
+    const exists = new Set(Object.values(q.pages || {}).filter(p => !('missing' in p)).map(p => p.title));
+    chunk.forEach(n => {
+      let t = n, guard = 0;
+      while (follow[t] && guard++ < 3) t = follow[t];
+      map[n] = exists.has(t) ? t : null;
+    });
+  }
+  return map;
+}
+
+async function fetchPageviews(title, start, end) {
+  const url = `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/ja.wikipedia/all-access/user/${encodeURIComponent(title.replace(/ /g, '_'))}/daily/${ymd(start)}/${ymd(end)}`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const items = (await res.json()).items || [];
+  const byDay = Object.fromEntries(items.map(it => [it.timestamp.slice(0, 8), it.views]));
+  const out = [];
+  // データがまだ公開されていない日は null（末尾の null は集計時に除外）
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) out.push(byDay[ymd(d)] ?? null);
+  return out;
+}
+
+async function refreshBuzz(force = false) {
+  if (buzzLoading) return;
+  if (!force && buzzCache && buzzCache.fetchedOn === todayStr()) { computeBuzz(); renderBuzz(); return; }
+  buzzLoading = true;
+  const status = document.getElementById('buzzStatus');
+  const btn = document.getElementById('buzzRefresh');
+  btn.disabled = true;
+  try {
+    status.textContent = '記事を確認中…';
+    const titles = await resolveWikiTitles(allMembers.map(m => m.name));
+    // 閲覧数は前日分までしか確定しないので、昨日までの BUZZ_DAYS 日分
+    const end = new Date(); end.setDate(end.getDate() - 1);
+    const start = new Date(end); start.setDate(start.getDate() - (BUZZ_DAYS - 1));
+    const data = {};
+    const queue = allMembers.filter(m => titles[m.name]);
+    let done = 0;
+    const worker = async () => {
+      while (queue.length) {
+        const m = queue.shift();
+        try {
+          const views = await fetchPageviews(titles[m.name], start, end);
+          if (views) data[m.name] = { title: titles[m.name], views };
+        } catch {}
+        done++;
+        status.textContent = `閲覧数を取得中… ${done} / ${done + queue.length}`;
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker()]); // 同時4件まで
+    buzzCache = { fetchedOn: todayStr(), endDate: toDateStr(end), data };
+    saveBuzz();
+  } catch {
+    status.textContent = 'Wikipediaに接続できませんでした。時間をおいて「更新」を押してください';
+  }
+  buzzLoading = false;
+  btn.disabled = false;
+  computeBuzz();
+  renderBuzz();
+  renderRecommend();
+}
+
+function median(arr) {
+  const s = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+function computeBuzz() {
+  buzzScores = {};
+  if (!buzzCache) return;
+  Object.entries(buzzCache.data).forEach(([name, { views: raw }]) => {
+    let last = raw.length - 1;
+    while (last >= 0 && raw[last] === null) last--;           // 未公開の末尾日を除外
+    const views = raw.slice(0, last + 1).map(v => v ?? 0);     // 途中の欠けは 0 扱い
+    const n = views.length;
+    if (n < 10) return;
+    const recent = (views[n - 1] + views[n - 2] + views[n - 3]) / 3;
+    const base = median(views.slice(Math.max(0, n - 31), n - 3));
+    // 閲覧が少ない人の誤差で跳ねないよう、普段の値は最低20として計算
+    const ratio = recent / Math.max(base, 20);
+    const total30 = views.slice(-30).reduce((a, b) => a + b, 0);
+    buzzScores[name] = { ratio, recent, base, total30, spark: views.slice(-30), lastIdx: last };
+  });
+  // 実際にデータがある最終日（表示用）
+  const maxIdx = Math.max(-1, ...Object.values(buzzScores).map(s => s.lastIdx));
+  if (maxIdx >= 0 && buzzCache.endDate) {
+    const d = parseDate(buzzCache.endDate);
+    d.setDate(d.getDate() - (BUZZ_DAYS - 1 - maxIdx));
+    buzzCache.lastDataDate = toDateStr(d);
+  }
+}
+
+function sparkline(vals, color) {
+  const w = 84, h = 22, max = Math.max(...vals, 1);
+  const pts = vals.map((v, i) => `${(i / (vals.length - 1) * w).toFixed(1)},${(h - 2 - v / max * (h - 4)).toFixed(1)}`).join(' ');
+  return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.3" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+function renderBuzz() {
+  const status = document.getElementById('buzzStatus');
+  const box = document.getElementById('buzzList');
+  const entries = Object.entries(buzzScores);
+  if (!entries.length) {
+    if (!buzzLoading && !status.textContent) status.textContent = 'まだデータがありません。「更新」で取得します';
+    box.innerHTML = '';
+    return;
+  }
+  const missing = allMembers.length - entries.length;
+  status.textContent = `${buzzCache.lastDataDate || buzzCache.endDate} までのデータ（${buzzCache.fetchedOn} 取得）` + (missing ? ` ・ 記事なし ${missing}人` : '');
+  const sort = document.getElementById('buzzSort').value;
+  const sorted = entries.sort((a, b) => sort === 'spike' ? b[1].ratio - a[1].ratio : b[1].total30 - a[1].total30).slice(0, 10);
+  box.innerHTML = sorted.map(([name, s], i) => {
+    const m = memberByName[name];
+    const color = dotColors[groupKey[m.group]];
+    const up = s.ratio >= 1.8;
+    const main = sort === 'spike'
+      ? `<b class="${up ? 'buzz-up' : ''}">×${s.ratio.toFixed(1)}</b><small>普段比</small>`
+      : `<b>${s.total30.toLocaleString()}</b><small>30日閲覧</small>`;
+    return `<div class="buzz-item">
+      <span class="rank-no">${i + 1}</span>
+      <span class="buzz-name" style="color:${color}">${name}<small>${m.group} ・ 直近 ${Math.round(s.recent).toLocaleString()}/日</small></span>
+      ${sparkline(s.spark, color)}
+      <span class="buzz-val">${main}</span>
+    </div>`;
+  }).join('');
+}
+document.getElementById('buzzSort').addEventListener('change', renderBuzz);
+
+// ---------- クリック操作（イベント委譲） ----------
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-pill-name],[data-remove-name],[data-rec-name],[data-log-date],[data-focus-name],[data-star-name]');
+  if (!t) return;
+
+  if (t.dataset.pillName || t.dataset.removeName) {
+    toggleFocus(t.dataset.pillName || t.dataset.removeName);
+    renderChips(); renderNamePool(); renderStats(); renderLog();
+  }
+  else if (t.dataset.recName) {
+    if (isFocused(t.dataset.recName, focusDate)) return;
+    toggleFocus(t.dataset.recName);
+    t.textContent = '★ 追加しました';
+    t.classList.add('done');
+    renderChips(); renderNamePool(); renderStats(); renderLog();
+  }
+  else if (t.dataset.logDate) {
+    setFocusDate(t.dataset.logDate);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  else if (t.dataset.focusName) {
+    // ランダムピッカーの結果から（常に「今日」に記録）
+    const added = toggleFocus(t.dataset.focusName, todayStr());
+    t.classList.toggle('on', added);
+    t.textContent = added ? '★ 今日の注目に登録済み' : '☆ 今日の注目に追加';
+    showToast(added ? `${t.dataset.focusName} を今日の注目に追加` : '今日の注目から外しました');
+  }
+  else if (t.dataset.starName) {
+    // メンバー一覧のカードから（常に「今日」に記録）
+    const added = toggleFocus(t.dataset.starName, todayStr());
+    t.classList.toggle('on', added);
+    t.textContent = added ? '★' : '☆';
+    showToast(added ? `${t.dataset.starName} を今日の注目に追加` : '今日の注目から外しました');
+  }
+});
+</script>
+</body>
+</html>
