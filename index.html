@@ -703,6 +703,7 @@
       <option value="4期生">4期生</option>
       <option value="5期生">5期生</option>
       <option value="6期生">6期生</option>
+      <option value="OG">OG</option>
     </select>
   </div>
   <div class="member-grid" id="memberGrid"></div>
@@ -853,7 +854,8 @@ const allMembers = [
   {name:"増田三莉音",  group:"乃木坂46", gen:"6期生", img:"images/mirine.jpg",    en:"Mirine Masuda"},
   {name:"森平麗心",    group:"乃木坂46", gen:"6期生", img:"images/urumi.jpg",     en:"Urumi Morihira"},
   {name:"矢田萌華",    group:"乃木坂46", gen:"6期生", img:"images/yada.jpg",      en:"Moeka Yada"},
-
+  {name:"山下美月",    group:"乃木坂46", gen:"OG", img:"",  en:"Mizuki Yamasita"},
+  
   // --- 櫻坂46 ---
   // 2期生
   {name:"山﨑天",      group:"櫻坂46", gen:"2期生", img:"", en:"Ten Yamasaki"},
@@ -1094,7 +1096,7 @@ function clearHistory() {
 //  MEMBER LIST
 // =============================================
 function genClass(gen) {
-  const map = { '2期生':'gen-2', '3期生':'gen-3', '新3期生':'gen-3', '4期生':'gen-4', '5期生':'gen-5', '6期生':'gen-6' };
+  const map = { '2期生':'gen-2', '3期生':'gen-3', '新3期生':'gen-3', '4期生':'gen-4', '5期生':'gen-5', '6期生':'gen-6', 'OG':'og'};
   return map[gen] || '';
 }
 
